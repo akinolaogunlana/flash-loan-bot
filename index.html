@@ -4,28 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flash Loan Bot</title>
-  <!-- ✅ Correct ethers.js CDN -->
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"
-          type="application/javascript"></script>
+  <!-- ✅ Correct ethers.js script -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #101010;
-      color: white;
+      background-color: #111;
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
+      margin: 0;
     }
     button {
       padding: 12px 24px;
+      font-size: 16px;
       background-color: #00b894;
       border: none;
       color: white;
-      font-size: 16px;
-      cursor: pointer;
       border-radius: 8px;
+      cursor: pointer;
     }
     button:hover {
       background-color: #019870;
@@ -39,11 +39,11 @@
 </head>
 <body>
   <h1>Flash Loan Bot</h1>
-  <button onclick="startFlashLoan()">Run Flash Loan</button>
+  <button onclick="runFlashLoan()">Run Flash Loan</button>
   <p id="status"></p>
 
   <script>
-    const contractAddress = "0xABCD1234567890ABCDEF1234567890ABCDEF1234"; // 🔁 Replace this
+    const contractAddress = "0xYourContractAddressHere"; // Replace with your deployed contract
 
     const contractABI = [
       {
@@ -55,30 +55,30 @@
       }
     ];
 
-    async function startFlashLoan() {
+    async function runFlashLoan() {
       const status = document.getElementById("status");
 
       try {
         if (typeof window.ethereum === "undefined") {
-          alert("❌ MetaMask is required!");
+          alert("MetaMask is required!");
           return;
         }
 
-        status.textContent = "⏳ Connecting to MetaMask...";
+        status.textContent = "🔗 Connecting to MetaMask...";
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         const signer = provider.getSigner();
 
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        status.textContent = "🚀 Executing flash loan...";
+        status.textContent = "🚀 Sending flash loan transaction...";
         const tx = await contract.executeFlashLoan();
         await tx.wait();
 
         status.textContent = "✅ Flash loan executed successfully!";
-      } catch (err) {
-        console.error(err);
-        status.textContent = "❌ Error: " + (err?.reason || err?.message || "Flash loan failed.");
+      } catch (error) {
+        console.error(error);
+        status.textContent = "❌ Error: " + (error?.message || "Something went wrong.");
       }
     }
   </script>
