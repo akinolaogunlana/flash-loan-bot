@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flash Loan Bot</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+  <!-- ✅ Correct ethers.js CDN -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"
+          type="application/javascript"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -41,9 +43,8 @@
   <p id="status"></p>
 
   <script>
-    const contractAddress = "0xABCD1234567890ABCDEF1234567890ABCDEF1234"; // 🔁 Replace with your actual deployed contract address
+    const contractAddress = "0xABCD1234567890ABCDEF1234567890ABCDEF1234"; // 🔁 Replace this
 
-    // ✅ Replace with your actual ABI
     const contractABI = [
       {
         "inputs": [],
@@ -56,9 +57,10 @@
 
     async function startFlashLoan() {
       const status = document.getElementById("status");
+
       try {
         if (typeof window.ethereum === "undefined") {
-          alert("MetaMask is required!");
+          alert("❌ MetaMask is required!");
           return;
         }
 
