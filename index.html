@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flash Loan Bot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="font-family: sans-serif; padding: 2rem;">
+  <h1>🚀 Flash Loan Arbitrage Bot</h1>
+  <p>This dApp connects to your deployed smart contract on the blockchain.</p>
+
+  <button onclick="startFlashLoan()">Run Flash Loan</button>
+
+  <script>
+    async function startFlashLoan() {
+      if (typeof window.ethereum === 'undefined') {
+        alert("MetaMask is required!");
+        return;
+      }
+
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+
+      // Replace with your deployed contract address & ABI
+      const contractAddress = "0xYourDeployedContractAddress";
+      const contractABI = [ /* ... ABI goes here ... */ ];
+
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      try {
+        const tx = await contract.executeFlashLoan(); // or your function name
+        await tx.wait();
+        alert("Flash Loan executed successfully!");
+      } catch (err) {
+        console.error(err);
+        alert("Flash loan failed.");
+      }
+    }
+  </script>
+
+  <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+</body>
+  </html>
