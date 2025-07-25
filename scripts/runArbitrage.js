@@ -8,7 +8,7 @@ async function main() {
   const token = "TOKEN_ADDRESS"; // Token to borrow
   const amount = hre.ethers.utils.parseUnits("1000", 18); // Borrow 1000 units
 
-  const tx = await contract.initiateFlashLoan(token, amount);
+  const tx = await contract.executeArbitrage(amount);
   console.log("Arbitrage transaction sent:", tx.hash);
   await tx.wait();
   console.log("Transaction confirmed!");
