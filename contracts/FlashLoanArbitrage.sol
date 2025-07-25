@@ -35,10 +35,15 @@ constructor(
 
 function executeArbitrage(uint256 amount) external {
     require(msg.sender == owner, "Only owner");
+
     address ;
-    assets ;
-    amounts ;
-    modes[0] = 0; // No debt (flash loan)
+    assets[0] = token0;
+
+    uint256 ;
+    amounts[0] = amount;
+
+    uint256 ;
+    modes[0] = 0; // Flash loan mode
 
     lendingPool.flashLoan(
         address(this),
@@ -50,7 +55,6 @@ function executeArbitrage(uint256 amount) external {
         0
     );
 }
-
 function executeOperation(
     address[] calldata assets,
     uint256[] calldata amounts,
