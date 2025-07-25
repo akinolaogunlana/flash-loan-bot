@@ -1,59 +1,78 @@
+// utils/smartProfitChecker.js
+
 const axios = require("axios");
 
-async function get1inchQuote(tokenIn, tokenOut, amount) {
-  const url = `https://api.1inch.dev/swap/v5.2/1/quote?src=${tokenIn}&dst=${tokenOut}&amount=${amount}`;
+const ONE_INCH_CHAIN_ID = 1; // Ethereum mainnet
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+async function get1inchTokenPrice(tokenAddress) {
   try {
+    const url = `https://api.1inch.dev/price/v1.1/${ONE_INCH_CHAIN_ID}?tokens=${tokenAddress}`;
     const res = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}`,
-      },
+        Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}`
+      }
     });
-
-    const toTokenAmount = parseFloat(res.data.toTokenAmount);
-    return toTokenAmount;
+    return parseFloat(res.data[tokenAddress]);
   } catch (err) {
-    console.error("🛑 Error fetching 1inch quote:", err.message);
+    console.error(`🔴 Failed to fetch 1inch price for ${tokenAddress}:`, err.message);
     return null;
   }
 }
 
-async function getCoinGeckoPrice(geckoId) {
+async function getCoinGeckoPrice(tokenId) {
   try {
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${geckoId}&vs_currencies=usd`;
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`;
     const res = await axios.get(url);
-    return res.data[geckoId]?.usd || null;
+    return res.data[tokenId].usd;
   } catch (err) {
-    console.error("🛑 Error fetching CoinGecko price:", err.message);
+    console.error(`🔴 Failed to fetch CoinGecko price for ${tokenId}:`, err.message);
     return null;
   }
 }
 
-async function checkProfit(tokenIn, tokenOut, amount, geckoIdOut) {
-  const oneInchQuote = await get1inchQuote(tokenIn, tokenOut, amount);
-  const coingeckoPrice = await getCoinGeckoPrice(geckoIdOut);
+async function getQuoteAmount(tokenIn, tokenOut, amount) {
+  try {
+    const url = `https://api.1inch.dev/swap/v5.2/${ONE_INCH_CHAIN_ID}/quote?src=${tokenIn}&dst=${tokenOut}&amount=${amount}`;
+    const res = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}`
+      }
+    });
+    return res.data.toTokenAmount;
+  } catch (err) {
+    console.error("🔴 Quote API failed:", err.message);
+    return null;
+  }
+}
 
-  if (!oneInchQuote || !coingeckoPrice) {
-    console.log("❌ Could not fetch required data.");
-    return;
+async function checkSmartProfit({ tokenIn, tokenOut, amount, tokenOutCoingeckoId }) {
+  console.log(`🧠 Checking arbitrage for ${tokenIn} -> ${tokenOut}...`);
+
+  const fastPrice = await get1inchTokenPrice(tokenOut);
+  if (!fastPrice) return 0;
+
+  const quotedAmount = await getQuoteAmount(tokenIn, tokenOut, amount);
+  if (!quotedAmount) return 0;
+
+  const tokenOutPrice = await getCoinGeckoPrice(tokenOutCoingeckoId);
+  if (!tokenOutPrice) return 0;
+
+  const receivedUSD = (quotedAmount / 1e18) * tokenOutPrice;
+  const inputUSD = (amount / 1e18) * fastPrice;
+
+  const profit = receivedUSD - inputUSD;
+
+  if (profit > 0) {
+    console.log(`💰 PROFIT DETECTED: +$${profit.toFixed(4)} | Input: $${inputUSD.toFixed(4)} | Output: $${receivedUSD.toFixed(4)}`);
+  } else {
+    console.log(`❌ No profit. Input: $${inputUSD.toFixed(4)} | Output: $${receivedUSD.toFixed(4)}`);
   }
 
-  const amountInUSD = amount / 1e18;
-  const oneInchToTokenInUSD = oneInchQuote / 1e18 * coingeckoPrice;
-  const profit = oneInchToTokenInUSD - amountInUSD;
-  const profitPercent = (profit / amountInUSD) * 100;
-
-  console.log(`💰 Estimated Profit: $${profit.toFixed(4)} (${profitPercent.toFixed(2)}%)`);
+  return profit;
 }
 
-module.exports = { checkProfit };
-
-// For manual test
-if (require.main === module) {
-  const tokenIn = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"; // ETH
-  const tokenOut = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI
-  const amount = 1e18; // 1 ETH
-  const geckoIdOut = "dai";
-
-  checkProfit(tokenIn, tokenOut, amount, geckoIdOut);
-}
+module.exports = {
+  checkSmartProfit
+};
