@@ -2,83 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flash Loan Bot</title>
-  <!-- ✅ Correct ethers.js script -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      background-color: #00b894;
-      border: none;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #019870;
-    }
-    #status {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #ccc;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-<body>
-  <h1>Flash Loan Bot</h1>
-  <button onclick="runFlashLoan()">Run Flash Loan</button>
-  <p id="status"></p>
+<body style="font-family: sans-serif; padding: 2rem;">
+  <h1>🚀 Flash Loan Bot</h1>
+  <p>Run arbitrage flash loan on BNB Chain or other EVM-compatible chains.</p>
+
+  <button onclick="startFlashLoan()">🔁 Run Flash Loan</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
   <script>
-    const contractAddress = "0xYourContractAddressHere"; // Replace with your deployed contract
-
-    const contractABI = [
-      {
-        "inputs": [],
-        "name": "executeFlashLoan",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
+    async function startFlashLoan() {
+      if (typeof window.ethereum === 'undefined') {
+        alert("❌ MetaMask is required to use this bot.");
+        return;
       }
-    ];
-
-    async function runFlashLoan() {
-      const status = document.getElementById("status");
 
       try {
-        if (typeof window.ethereum === "undefined") {
-          alert("MetaMask is required!");
-          return;
-        }
+        // Request account connection
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        status.textContent = "🔗 Connecting to MetaMask...";
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
+        // Create a provider with explicit network to avoid ENS issues
+        const provider = new ethers.providers.Web3Provider(window.ethereum, {
+          name: "bnb",
+          chainId: 56
+        });
+
         const signer = provider.getSigner();
+
+        // Replace with your smart contract address and ABI
+        const contractAddress = "0xYourSmartContractAddressHere";
+        const contractABI = [
+          // 🔁 Replace with your deployed contract ABI
+          {
+            "inputs": [],
+            "name": "executeFlashLoan",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+          }
+        ];
 
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        status.textContent = "🚀 Sending flash loan transaction...";
-        const tx = await contract.executeFlashLoan();
+        // Call the flash loan execution function
+        const tx = await contract.executeFlashLoan(); // or your actual function
         await tx.wait();
 
-        status.textContent = "✅ Flash loan executed successfully!";
+        alert("✅ Flash loan executed successfully!");
       } catch (error) {
         console.error(error);
-        status.textContent = "❌ Error: " + (error?.message || "Something went wrong.");
+        alert("⚠️ Error: " + error.message);
       }
     }
   </script>
