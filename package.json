@@ -1,0 +1,21 @@
+{
+  "name": "flashloan-arbitrage-bot",
+  "version": "1.0.0",
+  "description": "A Flash Loan Arbitrage bot using Hardhat and JavaScript",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "node scripts/deploy.js",
+    "simulate": "node scripts/simulateBot.js",
+    "run": "node scripts/runArbitrage.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.22.1",
+    "nodemailer": "^6.9.10"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0"
+  }
+}
