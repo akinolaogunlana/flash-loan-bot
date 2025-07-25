@@ -4,85 +4,69 @@
   <meta charset="UTF-8" />
   <title>Flash Loan Bot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 2rem;
-      background-color: #0f172a;
-      color: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      color: #38bdf8;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-    button:hover {
-      background-color: #1e40af;
-    }
-    .status {
-      margin-top: 1rem;
-      font-size: 0.95rem;
-    }
-  </style>
 </head>
-<body>
-  <h1>🚀 Flash Loan Arbitrage Bot</h1>
-  <p>Click to execute a flash loan arbitrage on BNB Smart Chain</p>
+<body style="font-family: sans-serif; padding: 2rem;">
+  <h1>🚀 Flash Loan Bot</h1>
+  <p>Run arbitrage flash loan on BNB Chain or other EVM-compatible chains.</p>
+
+  <label>
+    Amount (in tokens):
+    <input type="text" id="amount" placeholder="Enter amount (e.g. 1000)" />
+  </label>
+  <br /><br />
   <button onclick="startFlashLoan()">🔁 Run Flash Loan</button>
-  <div class="status" id="status">Waiting...</div>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
   <script>
-    const CONTRACT_ADDRESS = "0xYourDeployedContractAddressHere"; // 🔁 Replace with your actual deployed contract address
-    const CONTRACT_ABI = [
-      {
-        "inputs": [],
-        "name": "executeFlashLoan",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
-    ];
-
     async function startFlashLoan() {
-      const statusDiv = document.getElementById('status');
+      if (typeof window.ethereum === 'undefined') {
+        alert("❌ MetaMask is required to use this bot.");
+        return;
+      }
+
       try {
-        if (!window.ethereum) {
-          alert("⚠️ MetaMask not detected. Please install it.");
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        // ✅ Set your deployed contract address here
+        const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
+
+        // ✅ ABI for `executeArbitrage(uint256)`
+        const contractABI = [
+          {
+            "inputs": [
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              }
+            ],
+            "name": "executeArbitrage",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+          }
+        ];
+
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        const inputAmount = document.getElementById("amount").value;
+        if (!inputAmount) {
+          alert("⚠️ Please enter an amount.");
           return;
         }
 
-        statusDiv.textContent = "⏳ Connecting to wallet...";
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-        const provider = new ethers.providers.Web3Provider(window.ethereum, {
-          chainId: 56,
-          name: "bnb"
-        });
-        const signer = provider.getSigner();
-
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-        statusDiv.textContent = "⏳ Executing flash loan transaction...";
-        const tx = await contract.executeFlashLoan();
+        const parsedAmount = ethers.utils.parseUnits(inputAmount, 18);
+        const tx = await contract.executeArbitrage(parsedAmount);
         await tx.wait();
 
-        statusDiv.textContent = "✅ Flash loan executed successfully!";
+        alert("✅ Flash loan executed successfully!");
       } catch (error) {
         console.error(error);
-        statusDiv.textContent = "❌ Error: " + error.message;
+        alert("⚠️ Error: " + error.message);
       }
     }
   </script>
