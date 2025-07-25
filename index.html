@@ -24,21 +24,20 @@
         // Request account connection
         await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        // Create a provider with explicit network to avoid ENS issues
-        const provider = new ethers.providers.Web3Provider(window.ethereum, {
-          name: "bnb",
-          chainId: 56
-        });
-
+        // Create provider and signer
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
 
-        // Replace with your smart contract address and ABI
-        const contractAddress = "0xYourSmartContractAddressHere";
+        // ✅ Replace with your real deployed contract address
+        const contractAddress = "0xA1234567890bCDEF1234567890abcdef12345678";
+
+        // ✅ Minimal ABI for executeArbitrage(uint256)
         const contractABI = [
-          // 🔁 Replace with your deployed contract ABI
           {
-            "inputs": [],
-            "name": "executeFlashLoan",
+            "inputs": [
+              { "internalType": "uint256", "name": "amount", "type": "uint256" }
+            ],
+            "name": "executeArbitrage",
             "outputs": [],
             "stateMutability": "nonpayable",
             "type": "function"
@@ -47,11 +46,21 @@
 
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-        // Call the flash loan execution function
-        const tx = await contract.executeFlashLoan(); // or your actual function
-        await tx.wait();
+        // Prompt user for amount
+        const amountInput = prompt("Enter arbitrage amount (in full tokens, e.g. 1 or 10):");
+        if (!amountInput || isNaN(amountInput)) {
+          alert("❌ Invalid amount.");
+          return;
+        }
 
-        alert("✅ Flash loan executed successfully!");
+        const amount = ethers.utils.parseUnits(amountInput, 18);
+
+        // Call the flash loan execution function
+        const tx = await contract.executeArbitrage(amount);
+        alert("⏳ Transaction sent: " + tx.hash);
+
+        await tx.wait();
+        alert("✅ Flash loan arbitrage executed!");
       } catch (error) {
         console.error(error);
         alert("⚠️ Error: " + error.message);
