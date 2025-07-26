@@ -16,9 +16,27 @@
   <br /><br />
   <button onclick="startFlashLoan()">🔁 Run Flash Loan</button>
 
+  <!-- Ethers v5 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
   <script>
+    const contractAddress = "0xYOUR_CONTRACT_ADDRESS"; // Replace this
+    const contractABI = [
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "name": "executeArbitrage",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+
     async function startFlashLoan() {
       if (typeof window.ethereum === 'undefined') {
         alert("❌ MetaMask is required to use this bot.");
@@ -28,28 +46,13 @@
       try {
         await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
         const signer = provider.getSigner();
 
-        // ✅ Set your deployed contract address here
-        const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
-
-        // ✅ ABI for `executeArbitrage(uint256)`
-        const contractABI = [
-          {
-            "inputs": [
-              {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-              }
-            ],
-            "name": "executeArbitrage",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-          }
-        ];
+        // ❗ Ensure this is a raw address, not an ENS name
+        if (!ethers.utils.isAddress(contractAddress)) {
+          throw new Error("❌ Invalid contract address (must be a raw 0x address).");
+        }
 
         const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
@@ -59,14 +62,14 @@
           return;
         }
 
-        const parsedAmount = ethers.utils.parseUnits(inputAmount, 18);
+        const parsedAmount = ethers.utils.parseUnits(inputAmount, 18); // Assumes 18 decimals
         const tx = await contract.executeArbitrage(parsedAmount);
         await tx.wait();
 
         alert("✅ Flash loan executed successfully!");
-      } catch (error) {
-        console.error(error);
-        alert("⚠️ Error: " + error.message);
+      } catch (err) {
+        console.error(err);
+        alert("⚠️ Error: " + (err?.reason || err.message || "Unknown error"));
       }
     }
   </script>
